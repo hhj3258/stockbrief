@@ -134,16 +134,29 @@ pip install "stockbrief[all]"          # 전부
 - **집중도** — 한 종목·시장·테마에 비중이 몰렸는지(`portfolio_concentration`).
 - **회고** — 과거 한 시점과 비교해 그동안의 매매가 수익에 도움이 됐는지 사후에 평가하는 것.
 
-## 한국투자증권(KIS) 계좌 연동
+## 증권사 연결 — 0개부터 N개까지
 
-[pykis](https://github.com/Soju06/python-kis) 세션을 넘기면 보유 종목을 KIS 잔고에서 자동으로 읽어 브리핑을 만듭니다.
+증권사 API는 **선택 플러그인**입니다. 하나도 안 붙여도(키리스), 여러 개를 붙여도 동작합니다.
 
 ```python
-from stockbrief.integrations.kis import build_briefing
-res = build_briefing(kis, out_dir="out")   # out/briefing_YYYYMMDD.md 생성
+from stockbrief import Advisor, AdvisorConfig, build_markdown, assemble, TossBrokerage, KisBrokerage
+from stockbrief.providers import JsonHoldingsProvider
+
+# 증권사 0개 — 보유는 직접 주입, 시세·심리·뉴스·환율은 전부 키리스(pykrx·yfinance·CNN·Google·ECB)
+provs = assemble([], holdings=JsonHoldingsProvider("holdings.json"))
+
+# 증권사 N개 — 보유는 자동 병합, 시세는 증권사 것, 빠진 자리는 키리스가 채움
+provs = assemble([TossBrokerage(), KisBrokerage(kis_session, quote_fn=..., ohlcv_fn=...)])
+
+print(build_markdown(Advisor(AdvisorConfig.default(), **provs).run(), AdvisorConfig.default()))
+# 또는 Advisor.from_brokerages(AdvisorConfig.default(), [TossBrokerage()])
 ```
 
-만들어진 마크다운을 웹 대시보드·메신저 등에 그대로 띄우면 됩니다. 전체 예시: [examples/kis_account.py](examples/kis_account.py).
+- **0개**: 브로커 없이도 완전 동작 — 보유만 JSON/dict로 주면 나머지는 무료 소스. (수급 등 일부 기능만 비활성)
+- **N개**: `assemble`이 보유를 `CompositeHoldingsProvider`로 병합하고, 시세/수급은 증권사 것을 쓰되 없으면 키리스로 폴백.
+- 현재 내장 브로커: **토스증권**(보유+시세) · **한국투자증권**(보유+시세+수급). 새 증권사는 `Brokerage` 하나 구현하면 끝.
+
+바로 붙이는 단축 함수도 있습니다 — `integrations.kis.build_briefing(kis)` / `integrations.toss.build_briefing(toss)`. 전체 예시: [examples/kis_account.py](examples/kis_account.py).
 
 ## 문서
 

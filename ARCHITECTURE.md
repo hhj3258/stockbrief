@@ -65,14 +65,15 @@ src/stockbrief/
   pipeline.py     # Advisor(provider를 묶어 run()) → BriefingInputs (+뉴스 유사제목 중복제거)
   briefing.py     # build_markdown(BriefingInputs) → 마크다운
   llm.py          # build_prompt/summarize — 사용자 LLM 콜러블로 산문화(키·벤더 비포함)
-  _util.py        # retry_call — 네트워크 일시 오류 백오프 재시도
+  brokerage.py    # Brokerage(ABC)·TossBrokerage·KisBrokerage·assemble — 증권사 0..N 조립(0개=키리스)
+  _util.py        # retry_call·get_json — 네트워크 재시도/JSON GET 공용
   providers/
     base.py       # 추상 클래스: Holdings/Quote/Sentiment/News/Fx/Flow Provider
     holdings_json.py · holdings_dict.py
     quotes_pykrx.py · quotes_yf.py · quotes_kis.py · quotes_composite.py
     sentiment_cnn.py · news_google.py · news_naver.py · fx_free.py · flow_kis.py
   integrations/
-    kis.py        # 한국투자증권(KIS) 어댑터 + build_briefing
+    kis.py · toss.py  # 증권사 어댑터(HoldingsProvider[+QuoteProvider]) + build_briefing 단축
 skills/           # Claude 스킬(portfolio-advisor·retrospect)
 examples/ · tests/
 ```

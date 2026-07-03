@@ -9,7 +9,7 @@ or plug in KIS / Naver for higher fidelity).
 
 from __future__ import annotations
 
-__version__ = "0.5.0"
+__version__ = "0.6.0"
 
 from . import lib  # noqa: F401
 from .briefing import build_markdown  # noqa: F401
@@ -32,6 +32,7 @@ from .lib import (  # noqa: F401
     weight_fit_score,
     weights,
 )
+from .brokerage import Brokerage, KisBrokerage, TossBrokerage, assemble  # noqa: F401,E402
 from .metrics import all_regions  # noqa: F401,E402
 from .pipeline import Advisor, BriefingInputs  # noqa: F401,E402
 
@@ -43,6 +44,10 @@ __all__ = [
     "build_markdown",
     "AdvisorConfig",
     "all_regions",
+    "Brokerage",
+    "TossBrokerage",
+    "KisBrokerage",
+    "assemble",
     "weights",
     "theme_weights",
     "region_weights",

@@ -83,6 +83,15 @@ class Advisor:
         self.p_naver = naver_news
         self.p_flow = flow
 
+    @classmethod
+    def from_brokerages(cls, config, brokerages=(), **overrides):
+        """0..N 증권사 + 키리스 폴백으로 Advisor 구성(brokerage.assemble 래퍼).
+
+        Advisor.from_brokerages(cfg, [TossBrokerage(), ...])  ·  증권사 0개면 holdings= 필수.
+        """
+        from .brokerage import assemble
+        return cls(config, **assemble(brokerages, **overrides))
+
     def _proxy_keys(self):
         out = {}
         for region, cfg in self.config.regions.items():
