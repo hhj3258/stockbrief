@@ -2,7 +2,7 @@
 
 from stockbrief.config import AdvisorConfig
 from stockbrief.models import Holdings, Position, Quote
-from stockbrief.providers import DictHoldingsProvider
+from stockbrief.providers import CompositeHoldingsProvider, DictHoldingsProvider
 from stockbrief.providers.base import QuoteProvider
 from stockbrief.providers.quotes_composite import CompositeQuoteProvider
 
@@ -43,6 +43,23 @@ def test_dict_holdings_provider():
     prov = DictHoldingsProvider(FAKE, cash=1_000_000)
     h = prov.holdings()
     assert h.cash == 1_000_000 and len(h.positions) == 2
+
+
+def test_composite_holdings_merge():
+    toss = DictHoldingsProvider([{"ticker": "NVDA", "name": "엔비디아", "market": "US",
+                                  "region": "US", "qty": 2, "avg_price_krw": 200000, "eval_amount": 500000}])
+    kb = DictHoldingsProvider([{"code": "069500", "name": "KODEX200", "market": "KR",
+                                "region": "KR", "qty": 10, "avg_price": 12000, "eval_amount": 130000}], cash=50000)
+    merged = CompositeHoldingsProvider([toss, kb]).holdings()
+    keys = {p.key for p in merged.positions}
+    assert keys == {"NVDA", "069500"} and merged.cash == 50000
+
+    class Boom(DictHoldingsProvider):
+        def holdings(self):
+            raise RuntimeError("source down")
+    # 한 소스 실패해도 나머지로 진행(비엄격)
+    ok = CompositeHoldingsProvider([Boom([]), kb]).holdings()
+    assert {p.key for p in ok.positions} == {"069500"}
 
 
 def test_composite_quote_routing():

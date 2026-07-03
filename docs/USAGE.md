@@ -83,7 +83,20 @@ JsonHoldingsProvider("holdings.json")   # {"tradable_holdings": [...], "trades_*
 ```
 
 ### 3c. 증권사 잔고 API (직접 어댑터)
-`HoldingsProvider`를 구현해 `holdings() -> Holdings`만 돌려주면 됩니다. 한국투자증권은 `integrations.kis.KisHoldingsProvider`로 바로 제공합니다(→ 7절).
+`HoldingsProvider`를 구현해 `holdings() -> Holdings`만 돌려주면 됩니다. 바로 제공되는 어댑터:
+- **한국투자증권**: `integrations.kis.KisHoldingsProvider`(pykis 세션 → 7절).
+- **토스증권**: `integrations.toss.TossHoldingsProvider` — 토스 Open API(OAuth2). `TOSS_CLIENT_ID`/`TOSS_CLIENT_SECRET` 환경변수. 읽기 전용(주문 API 미사용), 미국주는 환율로 원화 환산.
+
+### 3d. 여러 계좌 병합 (`CompositeHoldingsProvider`)
+보유가 여러 증권사에 나뉘어 있으면 각 provider 를 합칩니다(한 소스 실패 시 나머지로 진행).
+```python
+from stockbrief.providers import CompositeHoldingsProvider, JsonHoldingsProvider
+from stockbrief.integrations.toss import TossHoldingsProvider
+holdings = CompositeHoldingsProvider([
+    TossHoldingsProvider(),               # 미국주(토스 API)
+    JsonHoldingsProvider("kb.json"),      # 한국주(다른 증권사, 수동/외부)
+])
+```
 
 ---
 

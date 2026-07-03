@@ -9,7 +9,7 @@ or plug in KIS / Naver for higher fidelity).
 
 from __future__ import annotations
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 
 from . import lib  # noqa: F401
 from .lib import (  # noqa: F401

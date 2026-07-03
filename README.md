@@ -88,7 +88,7 @@ print(build_markdown(advisor.run(), AdvisorConfig.default()))
 
 | 데이터 | 무료 기본(키 불필요) | 정밀 옵션 |
 |---|---|---|
-| 보유 종목 | `JsonHoldingsProvider` · `DictHoldingsProvider` | 한국투자증권 잔고(`integrations.kis`) |
+| 보유 종목 | `JsonHoldingsProvider` · `DictHoldingsProvider` · 병합 `CompositeHoldingsProvider` | 한국투자증권(`integrations.kis`) · 토스증권(`integrations.toss`) |
 | 시세 | `PykrxQuoteProvider`(한국) · `YfinanceQuoteProvider`(미국) | `KisQuoteProvider` |
 | 환율 | `FreeFxProvider`(ECB) | — |
 | 투자 심리 | `CnnFngProvider`(미국) | — |
