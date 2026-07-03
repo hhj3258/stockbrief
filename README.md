@@ -23,27 +23,21 @@
 ## 빠른 시작
 
 ```python
-from stockbrief.config import AdvisorConfig
-from stockbrief.pipeline import Advisor
-from stockbrief.briefing import build_markdown
-from stockbrief.providers import DictHoldingsProvider, FreeFxProvider, CnnFngProvider, GoogleNewsProvider
-from stockbrief.providers.quotes_composite import CompositeQuoteProvider
-from stockbrief.providers.quotes_pykrx import PykrxQuoteProvider
-from stockbrief.providers.quotes_yf import YfinanceQuoteProvider
+from stockbrief import Advisor, AdvisorConfig, build_markdown, assemble
+from stockbrief.providers import DictHoldingsProvider
 
-advisor = Advisor(
-    AdvisorConfig.default(),
-    holdings=DictHoldingsProvider([
-        {"code": "069500", "name": "KODEX200", "market": "KR", "region": "KR", "qty": 1, "avg_price": 120000, "eval_amount": 129270},
-        {"ticker": "NVDA", "name": "엔비디아", "market": "US", "region": "US", "qty": 1, "avg_price_krw": 200000, "eval_amount": 311000},
-    ]),
-    quotes=CompositeQuoteProvider({"KR": PykrxQuoteProvider(), "US": YfinanceQuoteProvider()}),
-    fx=FreeFxProvider(), sentiment=CnnFngProvider(), news=GoogleNewsProvider(),   # 모두 키 불필요
-)
-print(build_markdown(advisor.run(), AdvisorConfig.default()))
+config = AdvisorConfig.default()
+holdings = DictHoldingsProvider([
+    {"code": "069500", "name": "KODEX200",  "market": "KR", "region": "KR", "qty": 1, "avg_price": 120000,     "eval_amount": 129270},
+    {"ticker": "NVDA",  "name": "엔비디아",  "market": "US", "region": "US", "qty": 1, "avg_price_krw": 200000, "eval_amount": 311000},
+])
+
+# 보유만 넣으면 끝. 시세·심리·뉴스·환율은 무료 소스가 자동으로 채워집니다.
+advisor = Advisor(config, **assemble([], holdings=holdings))
+print(build_markdown(advisor.run(), config))
 ```
 
-**여기까지 API 키가 하나도 필요 없습니다.** (바로 실행: `python examples/keyless_demo.py`)
+**여기까지 API 키가 하나도 필요 없습니다.** `assemble`이 무료 소스(pykrx·yfinance·CNN·구글·ECB)를 알아서 붙입니다. (바로 실행: `python examples/keyless_demo.py`)
 
 ## 출력 예시
 
@@ -95,6 +89,8 @@ print(build_markdown(advisor.run(), AdvisorConfig.default()))
 | 뉴스 | `GoogleNewsProvider` | `NaverNewsProvider` |
 | 수급 | — | `KisFlowProvider` |
 
+> 이 클래스 이름들을 외울 필요는 없습니다 — `assemble`이 상황에 맞게 골라 줍니다. 직접 조립하는 세밀한 사용법은 [USAGE](docs/USAGE.md)에 있습니다.
+
 ## 설치
 
 ```bash
@@ -136,27 +132,27 @@ pip install "stockbrief[all]"          # 전부
 
 ## 증권사 연결 — 0개부터 N개까지
 
-증권사 API는 **선택 플러그인**입니다. 하나도 안 붙여도(키리스), 여러 개를 붙여도 동작합니다.
+증권사 API는 **선택 플러그인**입니다. 위 빠른 시작의 `assemble([])`에서 리스트에 증권사를 넣기만 하면 됩니다.
 
 ```python
-from stockbrief import Advisor, AdvisorConfig, build_markdown, assemble, TossBrokerage, KisBrokerage
-from stockbrief.providers import JsonHoldingsProvider
+from stockbrief import assemble, TossBrokerage, KisBrokerage
 
-# 증권사 0개 — 보유는 직접 주입, 시세·심리·뉴스·환율은 전부 키리스(pykrx·yfinance·CNN·Google·ECB)
-provs = assemble([], holdings=JsonHoldingsProvider("holdings.json"))
+# 토스만 붙이면 보유+시세 자동 (TOSS_CLIENT_ID/SECRET 환경변수)
+providers = assemble([TossBrokerage()])
 
-# 증권사 N개 — 보유는 자동 병합, 시세는 증권사 것, 빠진 자리는 키리스가 채움
-provs = assemble([TossBrokerage(), KisBrokerage(kis_session, quote_fn=..., ohlcv_fn=...)])
-
-print(build_markdown(Advisor(AdvisorConfig.default(), **provs).run(), AdvisorConfig.default()))
-# 또는 Advisor.from_brokerages(AdvisorConfig.default(), [TossBrokerage()])
+# 여러 증권사 — 보유가 자동으로 병합됩니다
+providers = assemble([TossBrokerage(), KisBrokerage(kis_session, quote_fn=..., ohlcv_fn=...)])
 ```
 
-- **0개**: 브로커 없이도 완전 동작 — 보유만 JSON/dict로 주면 나머지는 무료 소스. (수급 등 일부 기능만 비활성)
-- **N개**: `assemble`이 보유를 `CompositeHoldingsProvider`로 병합하고, 시세/수급은 증권사 것을 쓰되 없으면 키리스로 폴백.
-- 현재 내장 브로커: **토스증권**(보유+시세) · **한국투자증권**(보유+시세+수급). 새 증권사는 `Brokerage` 하나 구현하면 끝.
+| 연결 | 보유 | 시세 | 수급 | 심리·뉴스·환율 |
+|---|---|---|---|---|
+| **0개** (키리스) | 직접 주입(JSON/dict) | pykrx·yfinance | 없음 | 무료(CNN·구글·ECB) |
+| **N개** | 증권사들 자동 병합 | 증권사 것 → 없으면 무료 | 있으면 사용 | 무료 |
 
-바로 붙이는 단축 함수도 있습니다 — `integrations.kis.build_briefing(kis)` / `integrations.toss.build_briefing(toss)`. 전체 예시: [examples/kis_account.py](examples/kis_account.py).
+- 현재 내장 브로커: **토스증권**(보유+시세) · **한국투자증권**(보유+시세+수급).
+- 새 증권사는 `Brokerage` 하나 구현하면 끝(세부는 [ARCHITECTURE](ARCHITECTURE.md)).
+
+전체 예시: [examples/kis_account.py](examples/kis_account.py).
 
 ## 문서
 
