@@ -124,7 +124,8 @@ NewsItem  = date(YYYY-MM-DD) · title · url · source
 
 - **시장 추가**: `config.regions`에 `{trend_proxy, [sentiment], flag}` 한 줄을 더하고, 보유 종목에 `region` 태그를 붙입니다. 코드 수정은 없습니다.
 - **시세 소스 추가**: `QuoteProvider`를 구현해 `quotes()`가 `{key: Quote}`를 돌려주게 하고, `CompositeQuoteProvider`에 market별로 끼웁니다.
-- **증권사 보유 연동**: `HoldingsProvider`를 구현해 `holdings()`가 정규화한 `Holdings`를 돌려주게 합니다. 예: `integrations/kis.KisHoldingsProvider`.
+- **증권사 추가(0..N)**: `brokerage.Brokerage`를 구현 — `holdings()` 필수, `quotes()`/`flow()`는 지원하면. `assemble([MyBrokerage(), ...])`가 N개 보유를 병합하고 빠진 자리를 키리스로 채운다(증권사 0개여도 동작). 예: `TossBrokerage`(보유+시세)·`KisBrokerage`(보유+시세+수급).
+- **증권사 보유만 연동**: `HoldingsProvider`를 구현해 `holdings()`가 정규화한 `Holdings`를 돌려주게 합니다. 예: `integrations/kis.KisHoldingsProvider`.
 - **투자 심리 소스 추가(예: 한국 심리 지수)**: `SentimentProvider`를 구현하고, `regions[r].sentiment` 키를 맞춘 뒤 `metrics.all_regions`의 심리 분기를 넓힙니다.
 - **새 통합(다른 봇·대시보드)**: `integrations/<이름>.py`에 어댑터와 `build_*_briefing` 한 줄 함수를 둡니다.
 - **LLM 산문 얹기**: `llm.summarize(markdown, llm_fn)` — 사용자 콜러블만 주면 데이터→마크다운→프롬프트→호출. 키·벤더는 패키지 밖(소비자 환경).

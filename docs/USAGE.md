@@ -59,6 +59,32 @@ md = build_markdown(inputs, advisor.config, title="오늘 브리핑", date="2026
 
 ---
 
+## 2.5. 증권사 0..N개 조립 — `assemble` (권장 진입점)
+
+provider를 하나씩 손으로 묶는 대신, **증권사(Brokerage)를 0..N개** 넘기면 `assemble`이 알아서 조립합니다.
+빠진 자리는 키리스 기본으로 채우므로 **증권사 0개여도 완전 동작**합니다.
+
+```python
+from stockbrief import Advisor, AdvisorConfig, build_markdown, assemble, TossBrokerage, KisBrokerage
+from stockbrief.providers import JsonHoldingsProvider
+
+# 증권사 0개 — 보유만 직접, 나머지는 무료 소스(pykrx·yfinance·CNN·Google·ECB)
+provs = assemble([], holdings=JsonHoldingsProvider("holdings.json"))
+
+# 증권사 N개 — 보유 자동 병합, 시세는 증권사 것, 빠진 자리는 키리스
+provs = assemble([TossBrokerage(),                                   # 토스: 보유+시세
+                  KisBrokerage(kis_session, quote_fn=..., ohlcv_fn=...)])  # KIS: 보유+시세+수급
+
+md = build_markdown(Advisor(AdvisorConfig.default(), **provs).run(), AdvisorConfig.default())
+# 한 줄 단축: Advisor.from_brokerages(AdvisorConfig.default(), [TossBrokerage()])
+```
+
+`assemble` 우선순위: **보유** = 증권사들 + `holdings=` 전부 병합(2개↑면 `CompositeHoldingsProvider`, 없으면 에러) · **시세** = `quotes=` → 증권사 첫 시세 → 키리스(pykrx/yf, `keyless_quotes=False`로 끔) · **수급** = `flow=` → 증권사 첫 flow → 없으면 비활성 · **심리·뉴스·환율** = 인자 없으면 키리스 기본.
+
+내장 브로커: **토스증권**(보유+시세) · **한국투자증권**(보유+시세+수급). 새 증권사 = `Brokerage` 하나 구현(`holdings()` 필수, `quotes()`/`flow()`는 있으면).
+
+---
+
 ## 3. 보유 종목(Holdings) 주입 — 가장 중요
 
 브리핑의 유일한 **필수** 입력입니다. 정규화된 형태(`Position`)로만 들어가면 어떤 소스든 됩니다.
