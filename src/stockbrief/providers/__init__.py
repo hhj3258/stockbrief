@@ -21,11 +21,12 @@ from .holdings_composite import CompositeHoldingsProvider  # noqa: F401
 from .holdings_dict import DictHoldingsProvider  # noqa: F401
 from .holdings_json import JsonHoldingsProvider  # noqa: F401
 from .news_google import GoogleNewsProvider  # noqa: F401
+from .quotes_composite import CompositeQuoteProvider  # noqa: F401
 from .sentiment_cnn import CnnFngProvider  # noqa: F401
 
 __all__ = [
     "HoldingsProvider", "QuoteProvider", "FxProvider", "SentimentProvider",
     "NewsProvider", "FlowProvider",
     "JsonHoldingsProvider", "DictHoldingsProvider", "CompositeHoldingsProvider",
-    "FreeFxProvider", "CnnFngProvider", "GoogleNewsProvider",
+    "CompositeQuoteProvider", "FreeFxProvider", "CnnFngProvider", "GoogleNewsProvider",
 ]

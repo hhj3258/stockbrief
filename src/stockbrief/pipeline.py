@@ -91,10 +91,10 @@ class Advisor:
                 out[proxy] = "KR"   # 지수 프록시는 대개 KRX 상장(필요시 소비자가 quotes에 직접)
         return out
 
-    def collect_news(self, days=7, asof=None):
+    def collect_news(self, days=7, asof=None, holdings=None):
         if not (self.p_news or self.p_naver):
             return {}
-        h = self._holdings
+        h = holdings if holdings is not None else self.p_holdings.holdings()
         out = {}
         for p in h.positions:
             terms = _news_terms(p.key, p.name, p.market, self.config.news_queries)
@@ -121,7 +121,6 @@ class Advisor:
 
     def run(self, news_days=7, asof=None) -> BriefingInputs:
         h = self.p_holdings.holdings()
-        self._holdings = h
         tradable = h.tradable_dicts()
         markets = {p.key: p.market for p in h.positions}
 
@@ -163,7 +162,7 @@ class Advisor:
                               cnn_score=cnn, investor=flow, rsi_overheat=rsi_oh)
         w, total = lib.weights(tradable)
         oh = lib.overheat_ratio(tradable, quotes, rsi_overheat=rsi_oh)
-        news = self.collect_news(days=news_days, asof=asof)
+        news = self.collect_news(days=news_days, asof=asof, holdings=h)
 
         return BriefingInputs(holdings=h, tradable=tradable, quotes=quotes, fx=fx,
                               sentiment=sentiment, flow=flow, regions=regions,

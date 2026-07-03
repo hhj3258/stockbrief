@@ -5,11 +5,9 @@ CNN 비공식 dataviz JSON 에서 직접. region='US' 만 점수 제공(그 외 
 
 from __future__ import annotations
 
-import json
 import logging
-import urllib.request
 
-from .._util import retry_call
+from .._util import get_json
 from .base import SentimentProvider
 
 logger = logging.getLogger(__name__)
@@ -36,12 +34,8 @@ class CnnFngProvider(SentimentProvider):
     def _fetch(self) -> dict | None:
         if self._cache is not None:
             return self._cache
-        def _get():
-            req = urllib.request.Request(_URL, headers=_HEADERS)
-            with urllib.request.urlopen(req, timeout=self.timeout) as r:
-                return json.load(r)
         try:
-            data = retry_call(_get, label="CNN F&G")
+            data = get_json(_URL, headers=_HEADERS, timeout=self.timeout, label="CNN F&G")
             fg = data.get("fear_and_greed", {}) or {}
             r1 = lambda x: round(float(x), 1) if x is not None else None  # noqa: E731
             self._cache = {

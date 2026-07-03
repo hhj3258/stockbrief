@@ -34,10 +34,6 @@ class YfinanceQuoteProvider(QuoteProvider):
             prev = float(df["close"].iloc[-2]) if len(df) >= 2 else None
             rate = round(100.0 * (price - prev) / prev, 2) if prev else None
             q = Quote(key=tkr, price=round(price, 2), prev=round(prev, 2) if prev else None, rate=rate)
-            ind = indicators_from_ohlcv(df, price)
-            q.rsi14 = ind.get("rsi14")
-            q.ma = ind.get("ma")
-            q.ma_align = ind.get("ma_align", "n/a")
-            q.w52_high, q.w52_low, q.w52_pos_pct = ind.get("w52_high"), ind.get("w52_low"), ind.get("w52_pos_pct")
+            q.set_indicators(indicators_from_ohlcv(df, price))
             out[tkr] = q
         return out

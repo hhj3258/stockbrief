@@ -37,12 +37,7 @@ class KisQuoteProvider(QuoteProvider):
                           prev=q.get("prev_price"), rate=q.get("rate"))
             try:
                 df = self.ohlcv_fn(self.kis, code, self.ohlcv_days)
-                ind = indicators_from_ohlcv(df, float(price or 0))
-                quote.rsi14 = ind.get("rsi14")
-                quote.ma = ind.get("ma")
-                quote.ma_align = ind.get("ma_align", "n/a")
-                quote.w52_high, quote.w52_low, quote.w52_pos_pct = (
-                    ind.get("w52_high"), ind.get("w52_low"), ind.get("w52_pos_pct"))
+                quote.set_indicators(indicators_from_ohlcv(df, float(price or 0)))
             except Exception as e:  # noqa: BLE001
                 logger.debug("지표 계산 실패 (code=%s): %s", code, e)
             out[code] = quote

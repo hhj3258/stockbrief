@@ -1,7 +1,7 @@
 """models·config·providers 단위테스트 — 전부 합성 데이터(개인정보 없음), 네트워크 미사용."""
 
 from stockbrief.config import AdvisorConfig
-from stockbrief.models import Holdings, Position, Quote
+from stockbrief.models import Holdings, Quote
 from stockbrief.providers import CompositeHoldingsProvider, DictHoldingsProvider
 from stockbrief.providers.base import QuoteProvider
 from stockbrief.providers.quotes_composite import CompositeQuoteProvider

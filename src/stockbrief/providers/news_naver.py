@@ -6,14 +6,12 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import os
 import urllib.parse
-import urllib.request
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
-from .._util import retry_call
+from .._util import get_json
 from ..models import NewsItem
 from .base import NewsProvider
 from .news_google import _clean, _within
@@ -38,20 +36,14 @@ class NaverNewsProvider(NewsProvider):
         now = asof or datetime.now(timezone.utc)
         if now.tzinfo is None:
             now = now.replace(tzinfo=timezone.utc)
-        from datetime import timedelta
         cutoff = now - timedelta(days=days)
         url = ("https://openapi.naver.com/v1/search/news.json?"
                + urllib.parse.urlencode({"query": query, "display": 20, "sort": "date"}))
         out: list[NewsItem] = []
-
-        def _get():
-            req = urllib.request.Request(url, headers={
-                "X-Naver-Client-Id": self.cid, "X-Naver-Client-Secret": self.csec,
-                "User-Agent": "stockbrief"})
-            with urllib.request.urlopen(req, timeout=self.timeout) as r:
-                return json.loads(r.read().decode("utf-8"))
         try:
-            data = retry_call(_get, label=f"Naver news {query!r}")
+            data = get_json(url, headers={
+                "X-Naver-Client-Id": self.cid, "X-Naver-Client-Secret": self.csec,
+                "User-Agent": "stockbrief"}, timeout=self.timeout, label=f"Naver news {query!r}")
         except Exception as e:  # noqa: BLE001
             logger.warning("Naver 뉴스 조회 실패 (query=%r): %s", query, e)
             return out

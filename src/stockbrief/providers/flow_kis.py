@@ -33,7 +33,8 @@ class KisFlowProvider(FlowProvider):
         raw = resp.raw() if callable(getattr(resp, "raw", None)) else getattr(resp, "raw", None)
         if not isinstance(raw, dict) or str(raw.get("rt_cd", "1")) != "0":
             mc = raw.get("msg_cd", "") if isinstance(raw, dict) else ""
-            raise RuntimeError(f"수급 조회 실패: [{mc}]")
+            m1 = raw.get("msg1", "") if isinstance(raw, dict) else ""
+            raise RuntimeError(f"수급 조회 실패: [{mc}] {m1}")
         flows = []
         for r in (raw.get("output") or [])[:days]:
             flows.append({
@@ -67,14 +68,5 @@ def _summarize(flows: list[dict]) -> dict:
     }
 
 
-def flow_score(investor: dict | None):
-    """외국인 수급 → 0~100 (computed_sentiment 입력용). 순매수=greed·연속매도=fear."""
-    if not investor:
-        return None
-    flows = investor.get("flows") or []
-    if not flows:
-        return None
-    f = flows[0].get("foreign_eok", 0) or 0
-    streak = (investor.get("summary") or {}).get("foreign_sell_streak_days", 0) or 0
-    base = 50 + (15 if f > 0 else -15 if f < 0 else 0) - min(streak, 5) * 4
-    return max(0.0, min(100.0, base))
+# flow_score 의 정본은 metrics.py 에 있다(중복 제거). 과거 이 경로 import 호환용 재노출.
+from ..metrics import flow_score  # noqa: E402,F401

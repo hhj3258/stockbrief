@@ -82,6 +82,16 @@ class Quote:
     w52_low: Optional[float] = None
     w52_pos_pct: Optional[float] = None
 
+    def set_indicators(self, ind: dict) -> "Quote":
+        """indicators_from_ohlcv 결과 dict → Quote 필드 대입(시세 provider 공용). self 반환."""
+        self.rsi14 = ind.get("rsi14")
+        self.ma = ind.get("ma")
+        self.ma_align = ind.get("ma_align", "n/a")
+        self.w52_high = ind.get("w52_high")
+        self.w52_low = ind.get("w52_low")
+        self.w52_pos_pct = ind.get("w52_pos_pct")
+        return self
+
     def as_dict(self) -> dict:
         return {
             "code": self.key, "name": self.name, "price": self.price, "prev": self.prev,

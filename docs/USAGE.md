@@ -53,7 +53,7 @@ md = build_markdown(inputs, advisor.config, title="오늘 브리핑", date="2026
 | `regions` | 시장별 국면 `{region: {flag, weight_pct, n, label, tone, detail}}` |
 | `weights` | 종목 비중 `{key: {name, eval, weight_pct}}` |
 | `overheat` | `(ratio, hot, have)` — 과열도(RSI 70 초과 종목 비율) |
-| `quotes` | `{key: 시세 dict}` (price·rate·rsi14·ma·ma_align·w52_*) + `_fx` |
+| `quotes` | `{key: 시세 dict}` (price·rate·rsi14·ma·ma_align·w52_*) — 환율은 별도 `fx` 필드 |
 | `news` | `{key: [NewsItem...]}` |
 | `fx`·`sentiment`·`flow`·`total_eval`·`holdings`·`tradable` | 부가 데이터 |
 

@@ -9,9 +9,11 @@ or plug in KIS / Naver for higher fidelity).
 
 from __future__ import annotations
 
-__version__ = "0.4.0"
+__version__ = "0.4.1"
 
 from . import lib  # noqa: F401
+from .briefing import build_markdown  # noqa: F401
+from .config import AdvisorConfig  # noqa: F401
 from .lib import (  # noqa: F401
     backcalc_buy_fill,
     classify_trade,
@@ -30,10 +32,17 @@ from .lib import (  # noqa: F401
     weight_fit_score,
     weights,
 )
+from .metrics import all_regions  # noqa: F401,E402
+from .pipeline import Advisor, BriefingInputs  # noqa: F401,E402
 
 __all__ = [
     "__version__",
     "lib",
+    "Advisor",
+    "BriefingInputs",
+    "build_markdown",
+    "AdvisorConfig",
+    "all_regions",
     "weights",
     "theme_weights",
     "region_weights",

@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-import json
 import logging
-import urllib.request
 
+from .._util import get_json
 from .base import FxProvider
 
 logger = logging.getLogger(__name__)
@@ -26,9 +25,8 @@ class FreeFxProvider(FxProvider):
     def usdkrw(self) -> float | None:
         for url, parse in _SOURCES:
             try:
-                req = urllib.request.Request(url, headers={"User-Agent": "stockbrief"})
-                with urllib.request.urlopen(req, timeout=self.timeout) as r:
-                    d = json.loads(r.read().decode("utf-8"))
+                d = get_json(url, headers={"User-Agent": "stockbrief"},
+                             timeout=self.timeout, label=f"FX {url.split('/')[2]}")
                 rate_raw, asof = parse(d)
                 rate = round(float(rate_raw), 2)
                 self.last = {"USDKRW": rate, "source": url.split("/")[2], "asof": asof}

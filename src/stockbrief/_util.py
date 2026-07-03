@@ -7,8 +7,10 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import time
+import urllib.request
 
 logger = logging.getLogger(__name__)
 
@@ -29,3 +31,13 @@ def retry_call(fn, *, attempts: int = 2, base_delay: float = 0.6,
                 logger.debug("%s 재시도 %d/%d: %s", label or "call", i, attempts, e)
                 time.sleep(base_delay * i)
     raise last
+
+
+def get_json(url: str, *, headers: dict | None = None, timeout: int = 10,
+             attempts: int = 2, label: str = ""):
+    """네트워크 GET → JSON. 일시 오류는 retry_call 로 재시도(모든 JSON provider 공용)."""
+    def _do():
+        req = urllib.request.Request(url, headers=headers or {})
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return json.load(r)
+    return retry_call(_do, attempts=attempts, label=label or url)
