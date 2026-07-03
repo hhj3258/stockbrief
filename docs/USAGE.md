@@ -85,7 +85,7 @@ JsonHoldingsProvider("holdings.json")   # {"tradable_holdings": [...], "trades_*
 ### 3c. 증권사 잔고 API (직접 어댑터)
 `HoldingsProvider`를 구현해 `holdings() -> Holdings`만 돌려주면 됩니다. 바로 제공되는 어댑터:
 - **한국투자증권**: `integrations.kis.KisHoldingsProvider`(pykis 세션 → 7절).
-- **토스증권**: `integrations.toss.TossHoldingsProvider` — 토스 Open API(OAuth2). `TOSS_CLIENT_ID`/`TOSS_CLIENT_SECRET` 환경변수. 읽기 전용(주문 API 미사용), 미국주는 환율로 원화 환산.
+- **토스증권**: `integrations.toss.TossHoldingsProvider`(보유) + `TossQuoteProvider`(시세) — 토스 Open API(OAuth2). `TOSS_CLIENT_ID`/`TOSS_CLIENT_SECRET` 환경변수. 읽기 전용(주문 API 미사용), 미국주는 환율로 원화 환산. **토스만 붙여도 보유+시세 완결** — `build_briefing(kis_or_toss_session)`은 시세 미지정 시 `TossQuoteProvider`를 자동 사용(KIS와 동등).
 
 ### 3d. 여러 계좌 병합 (`CompositeHoldingsProvider`)
 보유가 여러 증권사에 나뉘어 있으면 각 provider 를 합칩니다(한 소스 실패 시 나머지로 진행).
@@ -108,6 +108,7 @@ from stockbrief.providers.quotes_pykrx import PykrxQuoteProvider       # 한국,
 from stockbrief.providers.quotes_yf import YfinanceQuoteProvider       # 미국, 키 0개
 from stockbrief.providers.quotes_composite import CompositeQuoteProvider  # market별 라우팅
 from stockbrief.providers.quotes_kis import KisQuoteProvider           # 선택: KisQuoteProvider(session, get_quote, get_daily_ohlcv)
+from stockbrief.integrations.toss import TossQuoteProvider             # 선택: 토스 Market Data(현재가+일봉→지표). TOSS_CLIENT_ID/SECRET
 # 환율·심리·뉴스·수급
 from stockbrief.providers import FreeFxProvider, CnnFngProvider, GoogleNewsProvider
 from stockbrief.providers.news_naver import NaverNewsProvider          # NaverNewsProvider(client_id, client_secret) 또는 NAVER_CLIENT_ID/SECRET 환경변수
