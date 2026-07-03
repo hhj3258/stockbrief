@@ -16,8 +16,12 @@ def _as_tradable(obj):
     return obj.get("tradable_holdings", []), obj.get("account_summary")
 
 
-def reconcile(old_h, new_obj, quotes, date, fx=None):
-    """이전/새 보유 diff → (trades, 순현금흐름 C(KRW), 병합결과, warnings)."""
+def reconcile(old_h, new_obj, quotes, date, fx=None, us_buy_proxy=False):
+    """이전/새 보유 diff → (trades, 순현금흐름 C(KRW), 병합결과, warnings).
+
+    us_buy_proxy: True 면 미국주 '매수'도 평단 역산 대신 그날 시세 프록시를 쓴다.
+      (토스 API 처럼 평단이 '오늘 환율' 환산이라 역산이 부정확한 소스용.)
+    """
     old_t = old_h["tradable_holdings"]
     new_t, new_summary = _as_tradable(new_obj)
     old_by = {holding_key(h): h for h in old_t}
@@ -47,31 +51,32 @@ def reconcile(old_h, new_obj, quotes, date, fx=None):
         if ref.get("ticker"):
             entry["ticker"] = ref["ticker"]
 
-        if side == "buy":
-            avg_b = avg_of(o) if o else 0
+        # 매수는 평단 역산(정확). 단 us_buy_proxy 면 미국주 매수도 시세 프록시.
+        if side == "buy" and not (us_buy_proxy and is_us):
             avg_a = avg_of(n)
-            fill = backcalc_buy_fill(qb, avg_b, qa, avg_a)
+            fill = backcalc_buy_fill(qb, avg_of(o) if o else 0, qa, avg_a)
             entry["fill_price_krw" if is_us else "fill_price"] = round(fill)
             entry["avg_after" + ("_krw" if is_us else "")] = avg_a
             entry["fill_source"] = "avg_backcalc"
             entry["fill_estimated"] = False
             cashflow += (qa - qb) * fill
-        else:  # sell — 평단 역산 불가 → 시세 프록시
-            q = quotes.get(k, {})
-            px = q.get("price")
+        else:  # 매도 전체 + (옵션)미국주 매수 → 그날 시세 프록시(추정)
+            px = quotes.get(k, {}).get("price")
+            sign = 1 if side == "buy" else -1        # 매수=현금유출(+C), 매도=유입(-C)
+            dq = abs(qa - qb)
             if px is None:
-                warnings.append(f"{name}({k}) 매도 — quotes에 시세 없음, fill 미정")
+                warnings.append(f"{name}({k}) {side} — quotes에 시세 없음, fill 미정")
                 entry["fill_price"] = None
             elif is_us:
                 entry["fill_price_usd"] = px
                 if fx:
                     entry["fill_price_krw"] = round(px * fx)
-                    cashflow -= (qb - qa) * px * fx
+                    cashflow += sign * dq * px * fx
                 else:
-                    warnings.append(f"{name} 매도 US — fx 없어 KRW 환산·C 반영 생략")
+                    warnings.append(f"{name} {side} US — fx 없어 KRW 환산·C 반영 생략")
             else:
                 entry["fill_price"] = px
-                cashflow -= (qb - qa) * px
+                cashflow += sign * dq * px
             entry["fill_source"] = "kis_quote_proxy"
             entry["fill_estimated"] = True
             if qa > 0:

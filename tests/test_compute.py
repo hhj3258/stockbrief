@@ -67,6 +67,17 @@ def test_reconcile_buy_sell():
     assert "trades_2026-01-02" in merged
 
 
+def test_reconcile_us_buy_proxy():
+    old = {"tradable_holdings": [{"ticker": "NVDA", "name": "n", "market": "US", "qty": 10, "avg_price_krw": 200000}]}
+    new = [{"ticker": "NVDA", "name": "n", "market": "US", "qty": 12, "avg_price_krw": 260000}]  # 미국주 매수
+    quotes = {"NVDA": {"price": 200}}  # USD 시세
+    t0 = reconcile(old, new, quotes, "2026-07-03", fx=1500)[0][0]           # 기본=평단 역산
+    assert t0["fill_source"] == "avg_backcalc" and t0["fill_estimated"] is False
+    t1 = reconcile(old, new, quotes, "2026-07-03", fx=1500, us_buy_proxy=True)[0][0]  # 미국주 매수 프록시
+    assert t1["fill_source"] == "kis_quote_proxy" and t1["fill_estimated"] is True
+    assert t1["fill_price_usd"] == 200 and t1["fill_price_krw"] == 300000
+
+
 def test_news_title_dedup():
     seen = [_title_tokens("엔비디아 실적 호조에 주가 급등")]
     # 사실상 같은 이슈(토큰 다수 겹침) → 중복
